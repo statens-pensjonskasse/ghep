@@ -1,0 +1,15 @@
+{
+  "channel": "#test",
+  "text": ":white_check_mark: Deployment to `prod` in <https://github.com/navikt/ghep|ghep> completed successfully, triggered by <https://github.com/someone-else|someone-else>.",
+  "attachments": [
+    {
+      "text": "<https://github.com/navikt/ghep/actions/runs/35338428898|Bygg og deploy / deploy-prod> [main]",
+      "type": "mrkdwn",
+      "color": "#34a44c",
+      "footer": "<https://github.com/navikt/ghep|navikt/ghep>",
+      "footer_icon": "https://slack-imgs.com/?c=1&o1=wi32.he32.si&url=https%3A%2F%2Fslack.github.com%2Fstatic%2Fimg%2Ffavicon-neutral.png"
+    }
+  ],
+  "unfurl_links": false,
+  "unfurl_media": false
+}

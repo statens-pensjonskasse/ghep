@@ -184,6 +184,8 @@ func (h *Handler) handleForSource(ctx context.Context, log *slog.Logger, team gi
 		return handleTeamEvent(log, source.Channel, event)
 	case github.TypeWorkflow:
 		return h.handleWorkflowEvent(ctx, log, team, source, event)
+	case github.TypeWorkflowJob:
+		return h.handleWorkflowJobEvent(ctx, log, team, source, event)
 	case github.TypeUnknown:
 	default:
 		log.Warn("unexpected github.EventType")
@@ -205,6 +207,8 @@ func getEventID(event github.Event) string {
 		return event.Alert.URL
 	} else if event.Workflow != nil && event.Action == "completed" && event.Workflow.Conclusion == "failure" {
 		return strconv.Itoa(event.Workflow.ID)
+	} else if event.WorkflowJob != nil && event.Action == "waiting" {
+		return workflowJobEventID(event.WorkflowJob)
 	} else if event.Release != nil && event.Action == "published" {
 		return strconv.Itoa(event.Release.ID)
 	}
@@ -262,6 +266,10 @@ func eventBranch(event github.Event, eventType github.EventType) string {
 	case github.TypeWorkflow:
 		if event.Workflow != nil {
 			return event.Workflow.HeadBranch
+		}
+	case github.TypeWorkflowJob:
+		if event.WorkflowJob != nil {
+			return event.WorkflowJob.HeadBranch
 		}
 	case github.TypePullRequest:
 		if event.PullRequest != nil {

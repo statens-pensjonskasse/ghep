@@ -1,0 +1,15 @@
+{
+  "channel": "#test",
+  "text": ":hourglass_flowing_sand: Deployment to `prod` in <https://github.com/navikt/ghep|ghep> is waiting for approval, triggered by <@U8PL7CR4K>.",
+  "attachments": [
+    {
+      "text": "<https://github.com/navikt/ghep/actions/runs/35338428898|Bygg og deploy / deploy-prod> [main]",
+      "type": "mrkdwn",
+      "color": "#9a6700",
+      "footer": "<https://github.com/navikt/ghep|navikt/ghep>",
+      "footer_icon": "https://slack-imgs.com/?c=1&o1=wi32.he32.si&url=https%3A%2F%2Fslack.github.com%2Fstatic%2Fimg%2Ffavicon-neutral.png"
+    }
+  ],
+  "unfurl_links": false,
+  "unfurl_media": false
+}

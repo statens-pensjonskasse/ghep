@@ -47,6 +47,12 @@ func TestEventBranch(t *testing.T) {
 			want:      "",
 		},
 		{
+			name:      "workflow job on main",
+			eventType: github.TypeWorkflowJob,
+			event:     github.Event{WorkflowJob: &github.WorkflowJob{HeadBranch: "main"}},
+			want:      "main",
+		},
+		{
 			name:      "pull request targeting main",
 			eventType: github.TypePullRequest,
 			event:     github.Event{PullRequest: &github.Issue{Base: github.IssueBase{Ref: "main"}}},
@@ -153,6 +159,8 @@ func TestHandleEvent(t *testing.T) {
 				}
 
 				message = slack.CreateWorkflowMessage(slackChannel, event)
+			case github.TypeWorkflowJob:
+				message = slack.CreateWorkflowJobMessage(ctx, log, mockDB, slackChannel, pingSlack, event)
 			case github.TypeRelease:
 				message = slack.CreateReleaseMessage(slackChannel, event)
 			case github.TypeCodeScanningAlert:

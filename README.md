@@ -55,6 +55,10 @@ Workflows som er vellykket er ikke så interessant, derfor er det kun workflows 
 
 ![A failed workflow will be posted to Slack](images/failed-workflow.png)
 
+Når en jobb venter på godkjenning av et deployment-miljø («review deployments») postes en melding til
+`workflows`-kanalen, og den som utløste kjøringen pinges (med `pingSlackUsers`). Meldingen oppdateres når
+jobben blir godkjent og kjører, og når den fullfører. Dette krever at appen abonnerer på hendelsen `workflow_job`.
+
 ### Releases
 
 Sender releases til en egen kanal, `draft`, `prerelease`, og `releases` blir sendt ut.
