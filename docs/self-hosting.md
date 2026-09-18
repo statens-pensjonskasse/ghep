@@ -35,6 +35,8 @@ Ghep will reject any request with an invalid or missing `X-Hub-Signature-256` he
 
 In addition to the above Github permissions the configured webhook must check of relevant boxes in "Subscribe to events".
 Note that not all of the events are supported by Ghep today.
+Subscribe to `workflow_job` (in addition to `workflow_run`) to get a message when a job is waiting for
+deployment approval; it needs the Actions permission above.
 
 #### Debugging webhooks
 

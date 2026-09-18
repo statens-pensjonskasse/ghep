@@ -31,6 +31,7 @@ const (
 	TypeSecretScanningAlert
 	TypeTeam
 	TypeWorkflow
+	TypeWorkflowJob
 	TypeUnknown
 
 	SeverityLow SeverityType = iota
@@ -283,6 +284,34 @@ type Workflow struct {
 	PullRequests []WorkflowPR `json:"pull_requests"`
 }
 
+// WorkflowJob er én jobb i en workflow-kjøring (webhook-hendelsen workflow_job).
+// Handlingen "waiting" betyr at jobben venter på godkjenning av et deployment-miljø.
+type WorkflowJob struct {
+	ID           int    `json:"id"`
+	RunID        int    `json:"run_id"`
+	Name         string `json:"name"`
+	WorkflowName string `json:"workflow_name"`
+	HeadBranch   string `json:"head_branch"`
+	HeadSHA      string `json:"head_sha"`
+	Status       string `json:"status"`
+	Conclusion   string `json:"conclusion"`
+	URL          string `json:"html_url"`
+}
+
+// RunURL er nettadressen til workflow-kjøringen jobben tilhører. Det er der godkjenningen gjøres.
+func (w WorkflowJob) RunURL(repository *Repository) string {
+	if repository == nil {
+		return ""
+	}
+
+	return fmt.Sprintf("%s/actions/runs/%d", repository.URL, w.RunID)
+}
+
+// Deployment følger med workflow_job-hendelser for jobber som bruker et miljø.
+type Deployment struct {
+	Environment string `json:"environment"`
+}
+
 // UpdateFailedJob finds and update the failed job in a workflow
 func (w *Workflow) UpdateFailedJob() error {
 	type Workflow struct {
@@ -364,6 +393,8 @@ type Event struct {
 	Membership          Membership        `json:"membership"`
 	SecurityAdvisory    *SecurityAdvisory `json:"security_advisory"`
 	Workflow            *Workflow         `json:"workflow_run"`
+	WorkflowJob         *WorkflowJob      `json:"workflow_job"`
+	Deployment          *Deployment       `json:"deployment"`
 }
 
 func (e Event) GetEventType() EventType {
@@ -395,6 +426,8 @@ func (e Event) GetEventType() EventType {
 		return TypeTeam
 	} else if e.Workflow != nil {
 		return TypeWorkflow
+	} else if e.WorkflowJob != nil {
+		return TypeWorkflowJob
 	}
 
 	return TypeUnknown
