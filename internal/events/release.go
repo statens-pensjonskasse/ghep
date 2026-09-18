@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/navikt/ghep/internal/github"
 	"github.com/navikt/ghep/internal/slack"
+	"github.com/navikt/ghep/internal/sql"
 	"github.com/navikt/ghep/internal/sql/gensql"
 )
 
@@ -29,7 +30,7 @@ func (h *Handler) handleReleaseEvent(ctx context.Context, log *slog.Logger, team
 			return nil, nil
 		}
 
-		updatedMessage := slack.CreateReleaseMessage(source.Channel, event)
+		updatedMessage := slack.CreateReleaseMessage(ctx, log, h.db, source.Channel, team.Config.PingSlackUsers, event)
 		updatedMessage.Timestamp = message.ThreadTs
 
 		log.Info("Posting update of release", "channel", updatedMessage.Channel, "timestamp", updatedMessage.Timestamp)
@@ -40,14 +41,14 @@ func (h *Handler) handleReleaseEvent(ctx context.Context, log *slog.Logger, team
 		return nil, nil
 	}
 
-	return handleReleaseEvent(log, source, event)
+	return handleReleaseEvent(ctx, log, h.db, team.Config.PingSlackUsers, source, event)
 }
 
-func handleReleaseEvent(log *slog.Logger, source github.Source, event github.Event) (*slack.Message, error) {
+func handleReleaseEvent(ctx context.Context, log *slog.Logger, db sql.Database, pingSlack bool, source github.Source, event github.Event) (*slack.Message, error) {
 	if !slices.Contains([]string{"published"}, event.Action) {
 		return nil, nil
 	}
 
 	log.Info("Received release", "channel", source.Channel)
-	return slack.CreateReleaseMessage(source.Channel, event), nil
+	return slack.CreateReleaseMessage(ctx, log, db, source.Channel, pingSlack, event), nil
 }

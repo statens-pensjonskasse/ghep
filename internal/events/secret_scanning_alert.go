@@ -27,5 +27,5 @@ func (h *Handler) handleSecretScanningAlertEvent(ctx context.Context, log *slog.
 	}
 
 	log.Info("Received secret scanning alert", "secret_type", event.Alert.SecretType)
-	return slack.CreateSecretScanningAlertMessage(source.Channel, message.ThreadTs, event), nil
+	return slack.CreateSecretScanningAlertMessage(ctx, log, h.db, source.Channel, message.ThreadTs, team.Config.PingSlackUsers, event), nil
 }

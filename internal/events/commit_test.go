@@ -102,7 +102,7 @@ func TestHandleCommitEventBranchFilter(t *testing.T) {
 				}
 			}
 
-			msg, err := handleCommitEvent(context.Background(), slog.Default(), tt.source, tt.event, &gensql.Queries{})
+			msg, err := handleCommitEvent(context.Background(), slog.Default(), tt.source, tt.event, &gensql.Queries{}, false)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}

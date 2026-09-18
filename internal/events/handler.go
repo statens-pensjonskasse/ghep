@@ -159,7 +159,7 @@ func (h *Handler) handleForSource(ctx context.Context, log *slog.Logger, team gi
 
 	switch eventType {
 	case github.TypeCommit:
-		return handleCommitEvent(ctx, log, source, event, h.db)
+		return handleCommitEvent(ctx, log, source, event, h.db, team.Config.PingSlackUsers)
 	case github.TypeCodeScanningAlert:
 		return h.handleCodeScanningAlertEvent(ctx, log, team, source, event)
 	case github.TypeDependabotAlert:
@@ -173,15 +173,15 @@ func (h *Handler) handleForSource(ctx context.Context, log *slog.Logger, team gi
 	case github.TypeRelease:
 		return h.handleReleaseEvent(ctx, log, team, source, event)
 	case github.TypeRepositoryRenamed:
-		return handleRenamedEvent(log, source.Channel, event), nil
+		return handleRenamedEvent(ctx, log, h.db, source.Channel, team.Config.PingSlackUsers, event), nil
 	case github.TypeRepositoryPublic:
-		return handlePublicizedEvent(log, source.Channel, event), nil
+		return handlePublicizedEvent(ctx, log, h.db, source.Channel, team.Config.PingSlackUsers, event), nil
 	case github.TypeSecurityAdvisory:
 		return h.handleSecurityAdvisoryEvent(ctx, log, team, source, event)
 	case github.TypeSecretScanningAlert:
 		return h.handleSecretScanningAlertEvent(ctx, log, team, source, event)
 	case github.TypeTeam:
-		return handleTeamEvent(log, source.Channel, event)
+		return handleTeamEvent(ctx, log, h.db, source.Channel, team.Config.PingSlackUsers, event)
 	case github.TypeWorkflow:
 		return h.handleWorkflowEvent(ctx, log, team, source, event)
 	case github.TypeWorkflowJob:

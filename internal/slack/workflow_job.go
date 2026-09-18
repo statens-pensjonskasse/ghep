@@ -2,11 +2,9 @@ package slack
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/navikt/ghep/internal/github"
 	"github.com/navikt/ghep/internal/sql"
 )
@@ -21,17 +19,7 @@ func CreateWorkflowJobMessage(ctx context.Context, log *slog.Logger, db sql.Data
 		what = fmt.Sprintf("Deployment to `%s`", event.Deployment.Environment)
 	}
 
-	triggeredBy := event.Sender.ToSlack()
-	if pingSlack {
-		userID, err := db.GetUserSlackID(ctx, event.Sender.Login)
-		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-			log.Error("Getting user Slack ID", "user", event.Sender.Login, "error", err)
-		}
-
-		if userID != "" {
-			triggeredBy = fmt.Sprintf("<@%s>", userID)
-		}
-	}
+	triggeredBy := mention(ctx, log, db, pingSlack, event.Sender)
 
 	var icon, verb, color string
 	switch event.Action {

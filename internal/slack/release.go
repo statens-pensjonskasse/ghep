@@ -1,12 +1,15 @@
 package slack
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/navikt/ghep/internal/github"
+	"github.com/navikt/ghep/internal/sql"
 )
 
-func CreateReleaseMessage(channel string, event github.Event) *Message {
+func CreateReleaseMessage(ctx context.Context, log *slog.Logger, db sql.Database, channel string, pingSlack bool, event github.Event) *Message {
 	releaseType := "release"
 	if event.Release.Draft {
 		releaseType = "draft release"
@@ -14,7 +17,7 @@ func CreateReleaseMessage(channel string, event github.Event) *Message {
 		releaseType = "prerelease"
 	}
 
-	text := fmt.Sprintf("%s created a <%s|%s> (`%s`) in %s", event.Sender.ToSlack(), event.Release.URL, releaseType, event.Release.Tag, event.Repository.ToSlack())
+	text := fmt.Sprintf("%s created a <%s|%s> (`%s`) in %s", mention(ctx, log, db, pingSlack, event.Sender), event.Release.URL, releaseType, event.Release.Tag, event.Repository.ToSlack())
 
 	return &Message{
 		Channel: channel,
