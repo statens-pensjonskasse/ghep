@@ -55,8 +55,10 @@ The Slack app will need the following permissions in order to work:
 |-------------------|-------------------------------------------------------------|
 | channels:join     | Join public channels in a workspace                         |
 | channels:read     | View basic information about public channels in a workspace |
+| groups:read       | List private channels the bot is a member of (`users.conversations`) |
 | chat:write        | Post and update messages                                    |
 | chat:write.public | Post to channels the bot isn't a member of                  |
+| im:write          | Open DMs for the personal digest (`conversations.open`)     |
 | reactions:read    | Read existing reactions before replacing them               |
 | reactions:write   | Add/remove reactions                                        |
 | users:read        | List workspace users                                        |

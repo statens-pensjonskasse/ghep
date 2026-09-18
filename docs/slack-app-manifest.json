@@ -17,10 +17,12 @@
                 "channels:read",
                 "chat:write",
                 "chat:write.public",
+                "groups:read",
+                "im:write",
                 "reactions:read",
                 "reactions:write",
-                "users:read.email",
-                "users:read"
+                "users:read",
+                "users:read.email"
             ]
         },
         "pkce_enabled": false
