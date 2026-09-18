@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -20,6 +21,10 @@ type Handler struct {
 	db          sql.Database
 	slack       slack.Slacker
 	teamsConfig map[string]github.Team
+	// announced holder event-id-er for meldinger som er under posting eller postet i denne
+	// prosessen. GitHub kan levere samme hendelse to ganger med millisekunders mellomrom, og
+	// da er ikke databasen oppdatert før nummer to slås opp. Peker, så kopier av Handler deler den.
+	announced *sync.Map
 }
 
 func NewHandler(db sql.Database, slackClient slack.Slacker, teamsConfig map[string]github.Team) Handler {
@@ -27,6 +32,7 @@ func NewHandler(db sql.Database, slackClient slack.Slacker, teamsConfig map[stri
 		db:          db,
 		slack:       slackClient,
 		teamsConfig: teamsConfig,
+		announced:   &sync.Map{},
 	}
 }
 
