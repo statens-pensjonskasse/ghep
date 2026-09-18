@@ -80,6 +80,48 @@ func TestHandleWorkflowJob(t *testing.T) {
 		slack.Ensure(t, event.GetEventType(), 0, 0, 0)
 	})
 
+	t.Run("second waiting event for the same job does not post again", func(t *testing.T) {
+		db := &mock.Database{SlackMessages: []gensql.CreateSlackMessageParams{
+			{TeamSlug: "test", EventID: "workflow_job/41234567890", ThreadTs: "1726650000.000100", Channel: "#test"},
+		}}
+		slack := &mock.Slack{}
+		handler := NewHandler(db, slack, map[string]github.Team{"test": team})
+
+		event, err := testdata.AsEvent("workflow-job-waiting-1.json")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if err := handler.handleSource(context.TODO(), slog.Default(), team, team.Sources[0], event); err != nil {
+			t.Error(err)
+		}
+
+		slack.Ensure(t, event.GetEventType(), 0, 0, 0)
+		if len(db.SlackMessages) != 1 {
+			t.Errorf("expected the stored message to be left alone, got %d stored messages", len(db.SlackMessages))
+		}
+	})
+
+	t.Run("duplicate waiting delivery before the first is stored posts once", func(t *testing.T) {
+		// Mocken lagrer ingen thread_ts, så databasesjekken fanger ikke duplikatet. Det må i-minne-settet.
+		db := &mock.Database{}
+		slack := &mock.Slack{}
+		handler := NewHandler(db, slack, map[string]github.Team{"test": team})
+
+		event, err := testdata.AsEvent("workflow-job-waiting-1.json")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for range 2 {
+			if err := handler.handleSource(context.TODO(), slog.Default(), team, team.Sources[0], event); err != nil {
+				t.Error(err)
+			}
+		}
+
+		slack.Ensure(t, event.GetEventType(), 1, 0, 0)
+	})
+
 	t.Run("waiting job from bot is ignored when ignoreBots is set", func(t *testing.T) {
 		db := &mock.Database{}
 		slack := &mock.Slack{}
