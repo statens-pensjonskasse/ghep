@@ -19,6 +19,11 @@ The app will not be able to do anything with these permissions, but it needs the
 | Code scanning alerts   | Read-only | Security alert events                                      |
 | Dependabot alerts      | Read-only | Dependabot alert events                                    |
 | Secret scanning alerts | Read-only | Secret scanning alert events                               |
+| Members                | Read-only | Org members, teams, and member e-mails for the GitHub↔Slack user mapping |
+
+The user mapping reads each member's public profile e-mail and their verified e-mails on the
+organization's verified domains (`organizationVerifiedDomainEmails`). The organization therefore needs
+a verified domain, and members must have an e-mail on that domain verified on their GitHub account.
 
 ### Webhook
 

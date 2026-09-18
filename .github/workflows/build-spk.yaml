@@ -1,0 +1,22 @@
+name: Bygg container-image (SPK)
+
+# Bygger og publiserer ghcr.io/statens-pensjonskasse/ghep via SPKs felles workflow.
+# Dockerfile kjører go vet, govulncheck og go test som del av bygget.
+# Pull requests bygges uten publisering.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    uses: statens-pensjonskasse/github-actions-library/.github/workflows/build-app-containerfile.yaml@a76cb28a089d1358be932025aae26c592f3e3820 # v1.57.0
+    permissions:
+      contents: read
+      packages: write
+    secrets: inherit
+    with:
+      file: Dockerfile
+      publish-images: ${{ github.event_name != 'pull_request' }}
