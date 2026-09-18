@@ -1,5 +1,8 @@
 # Ghep event pusher
 
+alle mine gheppers melder seg her
+gheppers get ghepped
+
 Ghep er en Github App som pusher Github events for teams til Slack.
 Det som skiller Ghep fra en haug av andre lignende tjenester er at den automagisk henter repoer basert på Github _teamet_ ditt, og pusher forskjellige events til forskjellige kanaler!
 
