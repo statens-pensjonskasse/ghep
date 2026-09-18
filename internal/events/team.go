@@ -53,7 +53,7 @@ func (h *Handler) handleTeamSideEffects(ctx context.Context, log *slog.Logger, e
 	return nil
 }
 
-func handleTeamEvent(_ *slog.Logger, channel string, event github.Event) (*slack.Message, error) {
+func handleTeamEvent(ctx context.Context, log *slog.Logger, db sql.Database, channel string, pingSlack bool, event github.Event) (*slack.Message, error) {
 	if channel == "" {
 		return nil, nil
 	}
@@ -62,5 +62,5 @@ func handleTeamEvent(_ *slog.Logger, channel string, event github.Event) (*slack
 		return nil, nil
 	}
 
-	return slack.CreateTeamMessage(channel, event), nil
+	return slack.CreateTeamMessage(ctx, log, db, channel, pingSlack, event), nil
 }

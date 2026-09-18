@@ -2,13 +2,11 @@ package slack
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"html"
 	"log/slog"
 	"strings"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/navikt/ghep/internal/github"
 	"github.com/navikt/ghep/internal/sql"
 )
@@ -30,12 +28,14 @@ func CreatePullRequestMessage(ctx context.Context, log *slog.Logger, db sql.Data
 		color = ColorDraft
 	}
 
+	sender := mention(ctx, log, db, pingSlack, event.Sender)
+
 	text := ""
 	attachments := []Attachment{}
 	if minimalist {
-		text = fmt.Sprintf("%s <%s|#%d %s> %s in `%s` by %s", eventType, event.PullRequest.URL, event.PullRequest.Number, html.EscapeString(event.PullRequest.Title), event.Action, event.Repository.ToSlack(), event.Sender.ToSlack())
+		text = fmt.Sprintf("%s <%s|#%d %s> %s in `%s` by %s", eventType, event.PullRequest.URL, event.PullRequest.Number, html.EscapeString(event.PullRequest.Title), event.Action, event.Repository.ToSlack(), sender)
 	} else {
-		text = fmt.Sprintf("%s <%s|#%d> %s in `%s` by %s", eventType, event.PullRequest.URL, event.PullRequest.Number, event.Action, event.Repository.ToSlack(), event.Sender.ToSlack())
+		text = fmt.Sprintf("%s <%s|#%d> %s in `%s` by %s", eventType, event.PullRequest.URL, event.PullRequest.Number, event.Action, event.Repository.ToSlack(), sender)
 		attachmentText := fmt.Sprintf("*<%s|#%d %s>*", event.PullRequest.URL, event.PullRequest.Number, html.EscapeString(event.PullRequest.Title))
 
 		if event.Action != "closed" && event.PullRequest.Body != "" {
@@ -43,29 +43,12 @@ func CreatePullRequestMessage(ctx context.Context, log *slog.Logger, db sql.Data
 		}
 
 		if len(event.PullRequest.RequestedReviewers) > 0 {
-			var reviewers strings.Builder
+			reviewers := make([]string, len(event.PullRequest.RequestedReviewers))
 			for i, reviewer := range event.PullRequest.RequestedReviewers {
-				if pingSlack {
-					userID, err := db.GetUserSlackID(ctx, reviewer.Login)
-					if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-						log.Error("Getting user Slack ID", "user", reviewer.Login, "error", err)
-					}
-
-					if userID != "" {
-						fmt.Fprintf(&reviewers, "<@%s>", userID)
-					} else {
-						fmt.Fprintf(&reviewers, "@%s", reviewer.Login)
-					}
-				} else {
-					fmt.Fprintf(&reviewers, "@%s", reviewer.Login)
-				}
-
-				if i < len(event.PullRequest.RequestedReviewers)-1 {
-					reviewers.WriteString(", ")
-				}
+				reviewers[i] = mention(ctx, log, db, pingSlack, reviewer)
 			}
 
-			attachmentText += fmt.Sprintf("\n*Requested reviewers:* %s", reviewers.String())
+			attachmentText += fmt.Sprintf("\n*Requested reviewers:* %s", strings.Join(reviewers, ", "))
 		}
 
 		attachments = []Attachment{

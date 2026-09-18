@@ -217,7 +217,7 @@ func TestHandleWorkflow(t *testing.T) {
 				}
 			}
 
-			got, err := handleWorkflowEvent(slog.Default(), tt.source, tt.event)
+			got, err := handleWorkflowEvent(context.Background(), slog.Default(), nil, false, tt.source, tt.event)
 			if err != nil && !tt.err {
 				t.Error(err)
 			}

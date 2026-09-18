@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/navikt/ghep/internal/github"
 	"github.com/navikt/ghep/internal/slack"
+	"github.com/navikt/ghep/internal/sql"
 	"github.com/navikt/ghep/internal/sql/gensql"
 )
 
@@ -89,10 +90,10 @@ func (h *Handler) handleWorkflowEvent(ctx context.Context, log *slog.Logger, tea
 		log.Error("Updating failed job", "error", err)
 	}
 
-	return handleWorkflowEvent(log, source, event)
+	return handleWorkflowEvent(ctx, log, h.db, team.Config.PingSlackUsers, source, event)
 }
 
-func handleWorkflowEvent(log *slog.Logger, source github.Source, event github.Event) (*slack.Message, error) {
+func handleWorkflowEvent(ctx context.Context, log *slog.Logger, db sql.Database, pingSlack bool, source github.Source, event github.Event) (*slack.Message, error) {
 	if source.Config.Workflows.IgnoreBots && event.Sender.IsBot() {
 		return nil, nil
 	}
@@ -110,5 +111,5 @@ func handleWorkflowEvent(log *slog.Logger, source github.Source, event github.Ev
 	}
 
 	log.Info("Received workflow run", "conclusion", event.Workflow.Conclusion, "channel", source.Channel)
-	return slack.CreateWorkflowMessage(source.Channel, event), nil
+	return slack.CreateWorkflowMessage(ctx, log, db, source.Channel, pingSlack, event), nil
 }

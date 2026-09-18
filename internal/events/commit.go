@@ -10,7 +10,7 @@ import (
 	"github.com/navikt/ghep/internal/sql"
 )
 
-func handleCommitEvent(ctx context.Context, log *slog.Logger, source github.Source, event github.Event, db sql.Database) (*slack.Message, error) {
+func handleCommitEvent(ctx context.Context, log *slog.Logger, source github.Source, event github.Event, db sql.Database, pingSlack bool) (*slack.Message, error) {
 	branch := strings.TrimPrefix(event.Ref, github.RefHeadsPrefix)
 
 	if len(source.Config.Branches) == 0 && branch != event.Repository.DefaultBranch {
@@ -23,5 +23,5 @@ func handleCommitEvent(ctx context.Context, log *slog.Logger, source github.Sour
 
 	log = log.With("channel", source.Channel)
 	log.Info("Received commit event")
-	return slack.CreateCommitMessage(ctx, log, db, source.Channel, event)
+	return slack.CreateCommitMessage(ctx, log, db, source.Channel, pingSlack, event)
 }

@@ -134,7 +134,7 @@ func TestHandleEvent(t *testing.T) {
 			var message *slack.Message
 			switch event.GetEventType() {
 			case github.TypeCommit:
-				message, err = slack.CreateCommitMessage(ctx, log, mockDB, slackChannel, event)
+				message, err = slack.CreateCommitMessage(ctx, log, mockDB, slackChannel, pingSlack, event)
 			case github.TypeIssue:
 				message = slack.CreateIssueMessage(ctx, log, mockDB, slackChannel, "", pingSlack, event)
 			case github.TypePullRequest:
@@ -146,11 +146,11 @@ func TestHandleEvent(t *testing.T) {
 			case github.TypePullRequestReview:
 				return // no-op for Slack
 			case github.TypeRepositoryRenamed:
-				message = slack.CreateRenamedMessage(slackChannel, event)
+				message = slack.CreateRenamedMessage(ctx, log, mockDB, slackChannel, pingSlack, event)
 			case github.TypeRepositoryPublic:
-				message = slack.CreatePublicizedMessage(slackChannel, event)
+				message = slack.CreatePublicizedMessage(ctx, log, mockDB, slackChannel, pingSlack, event)
 			case github.TypeTeam:
-				message = slack.CreateTeamMessage(slackChannel, event)
+				message = slack.CreateTeamMessage(ctx, log, mockDB, slackChannel, pingSlack, event)
 			case github.TypeWorkflow:
 				event.Workflow.FailedJob = github.FailedJob{
 					Name: "job",
@@ -158,11 +158,11 @@ func TestHandleEvent(t *testing.T) {
 					Step: "step",
 				}
 
-				message = slack.CreateWorkflowMessage(slackChannel, event)
+				message = slack.CreateWorkflowMessage(ctx, log, mockDB, slackChannel, pingSlack, event)
 			case github.TypeWorkflowJob:
 				message = slack.CreateWorkflowJobMessage(ctx, log, mockDB, slackChannel, pingSlack, event)
 			case github.TypeRelease:
-				message = slack.CreateReleaseMessage(slackChannel, event)
+				message = slack.CreateReleaseMessage(ctx, log, mockDB, slackChannel, pingSlack, event)
 			case github.TypeCodeScanningAlert:
 				message = slack.CreateCodeScanningAlertMessage(slackChannel, "", event)
 			case github.TypeDependabotAlert:
@@ -170,7 +170,7 @@ func TestHandleEvent(t *testing.T) {
 			case github.TypeSecurityAdvisory:
 				message = slack.CreateSecurityAdvisoryMessage(slackChannel, event)
 			case github.TypeSecretScanningAlert:
-				message = slack.CreateSecretScanningAlertMessage(slackChannel, "", event)
+				message = slack.CreateSecretScanningAlertMessage(ctx, log, mockDB, slackChannel, "", pingSlack, event)
 			default:
 				t.Fatalf("unknown event file: %s", entry.Name())
 			}

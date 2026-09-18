@@ -14,7 +14,7 @@ import (
 	"github.com/navikt/ghep/internal/sql"
 )
 
-func createAuthors(ctx context.Context, log *slog.Logger, db sql.Database, event github.Event) (string, error) {
+func createAuthors(ctx context.Context, log *slog.Logger, db sql.Database, pingSlack bool, event github.Event) (string, error) {
 	// event sender has login/username and url
 	// commit co-authors only have a name and e-mail
 	// commit author has name, e-mail, and login/username
@@ -51,17 +51,20 @@ func createAuthors(ctx context.Context, log *slog.Logger, db sql.Database, event
 		}
 	}
 
-	// With each co-author we see if we have more information saved
+	// With each co-author we see if we have more information saved. The emails table only
+	// holds organization members, so any e-mail can be looked up.
 	for i, coAuthor := range commitCoAuthors {
-		if strings.HasSuffix(coAuthor.Email, "@nav.no") {
-			username, err := db.GetUserByEmail(ctx, coAuthor.Email)
-			if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-				log.Error("Getting user by email", "email", coAuthor.Email, "error", err)
-			}
+		if coAuthor.Email == "" {
+			continue
+		}
 
-			if username != "" {
-				commitCoAuthors[i].Username = username
-			}
+		username, err := db.GetUserByEmail(ctx, coAuthor.Email)
+		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+			log.Error("Getting user by email", "email", coAuthor.Email, "error", err)
+		}
+
+		if username != "" {
+			commitCoAuthors[i].Username = username
 		}
 	}
 
@@ -75,7 +78,7 @@ func createAuthors(ctx context.Context, log *slog.Logger, db sql.Database, event
 
 	authorsAsString := make([]string, len(commitAuthors))
 	for i, author := range commitAuthors {
-		authorsAsString[i] = author.AsUser().ToSlack()
+		authorsAsString[i] = mentionAuthor(ctx, log, db, pingSlack, author)
 	}
 
 	var senders string
@@ -89,8 +92,8 @@ func createAuthors(ctx context.Context, log *slog.Logger, db sql.Database, event
 	return senders, nil
 }
 
-func CreateCommitMessage(ctx context.Context, log *slog.Logger, db sql.Database, channel string, event github.Event) (*Message, error) {
-	authors, err := createAuthors(ctx, log, db, event)
+func CreateCommitMessage(ctx context.Context, log *slog.Logger, db sql.Database, channel string, pingSlack bool, event github.Event) (*Message, error) {
+	authors, err := createAuthors(ctx, log, db, pingSlack, event)
 	if err != nil {
 		return nil, fmt.Errorf("creating authors: %w", err)
 	}

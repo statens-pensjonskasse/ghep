@@ -2,26 +2,25 @@ package slack
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"html"
 	"log/slog"
 	"strings"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/navikt/ghep/internal/github"
 	"github.com/navikt/ghep/internal/sql"
 )
 
 func CreateIssueMessage(ctx context.Context, log *slog.Logger, db sql.Database, channel, threadTimestamp string, pingSlack bool, event github.Event) *Message {
 	color := ColorOpened
+	sender := mention(ctx, log, db, pingSlack, event.Sender)
 
-	text := fmt.Sprintf("Issue <%s|#%d> %s in `%s` by %s", event.Issue.URL, event.Issue.Number, event.Action, event.Repository.ToSlack(), event.Sender.ToSlack())
+	text := fmt.Sprintf("Issue <%s|#%d> %s in `%s` by %s", event.Issue.URL, event.Issue.Number, event.Action, event.Repository.ToSlack(), sender)
 	attachmentText := fmt.Sprintf("*<%s|#%d %s>*", event.Issue.URL, event.Issue.Number, html.EscapeString(event.Issue.Title))
 
 	if event.Action == "closed" {
 		color = ColorMerged
-		text = fmt.Sprintf("Issue <%s|#%d> %s as %s in `%s` by %s", event.Issue.URL, event.Issue.Number, event.Action, event.Issue.StateReason, event.Repository.ToSlack(), event.Sender.ToSlack())
+		text = fmt.Sprintf("Issue <%s|#%d> %s as %s in `%s` by %s", event.Issue.URL, event.Issue.Number, event.Action, event.Issue.StateReason, event.Repository.ToSlack(), sender)
 	}
 
 	if event.Action != "closed" && event.Issue.Body != "" {
@@ -29,29 +28,12 @@ func CreateIssueMessage(ctx context.Context, log *slog.Logger, db sql.Database, 
 	}
 
 	if len(event.Issue.Assignees) > 0 {
-		var assignees strings.Builder
+		assignees := make([]string, len(event.Issue.Assignees))
 		for i, assignee := range event.Issue.Assignees {
-			if pingSlack {
-				userID, err := db.GetUserSlackID(ctx, assignee.Login)
-				if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-					log.Error("Getting user Slack ID", "user", assignee.Login, "error", err)
-				}
-
-				if userID != "" {
-					fmt.Fprintf(&assignees, "<@%s>", userID)
-				} else {
-					fmt.Fprintf(&assignees, "@%s", assignee.Login)
-				}
-			} else {
-				fmt.Fprintf(&assignees, "@%s", assignee.Login)
-			}
-
-			if i < len(event.Issue.Assignees)-1 {
-				assignees.WriteString(", ")
-			}
+			assignees[i] = mention(ctx, log, db, pingSlack, assignee)
 		}
 
-		attachmentText += fmt.Sprintf("\n*Assignees:* %s", assignees.String())
+		attachmentText += fmt.Sprintf("\n*Assignees:* %s", strings.Join(assignees, ", "))
 	}
 
 	return &Message{
