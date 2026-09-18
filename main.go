@@ -49,8 +49,12 @@ func main() {
 
 	subscribeToOrg, _ := strconv.ParseBool(os.Getenv("GHEP_SUBSCRIBE_TO_ORG"))
 
-	go ghep.FetchGithubData(ctx, log.With("component", "fetch-teams"), db, teamConfig, githubClient, subscribeToOrg)
-	go ghep.FetchSlackUsers(ctx, log.With("component", "fetch-slack"), db)
+	go func() {
+		ghep.FetchGithubData(ctx, log.With("component", "fetch-teams"), db, teamConfig, githubClient, subscribeToOrg)
+		// Slack-brukere kobles til GitHub-brukere via e-postene GitHub-syncen lagrer.
+		// Kjøres den samtidig, er emails-tabellen tom og slack_ids blir stående tom til neste restart.
+		ghep.FetchSlackUsers(ctx, log.With("component", "fetch-slack"), db)
+	}()
 	go ghep.RunLeaderSchedulers(ctx, log.With("component", "schedulers"), db, teamConfig, githubClient, slackClient, personalDigestUsers)
 
 	glog := log.With("component", "ghep")
